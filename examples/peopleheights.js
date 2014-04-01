@@ -2,7 +2,7 @@ var syncorm = require("../lib/syncorm");
 
 var db = new syncorm.Database({
 		driver: "mysql",
-		sqlLog: true,
+		sqlLog: false,
         host: '127.0.0.1',
         port: 8889,
         user: 'root',
