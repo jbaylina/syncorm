@@ -5,7 +5,7 @@
   },
   "name": "syncorm",
   "description": "Syncronous ORM",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "url": ""
   },
@@ -21,7 +21,8 @@
     "underscore": "~1.6.0",
     "mysql": "~2.1.1",
     "events": "~1.0.0",
-    "q": "~1.0.1"
+    "q": "~1.0.1",
+    "bintrees": "~1.0.0"
   },
   "engines": {
     "node": "*"
