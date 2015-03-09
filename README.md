@@ -1,5 +1,4 @@
-INTRODUCTION
-============
+# INTRODUCTION
 
 The main idea of this orm is to load the full database in memory at the begining of the execution.
 
@@ -12,9 +11,11 @@ So you can access all the data directly with javascript objects. It is very usef
 In the same way, you can also write to the database in a short transaction. You just edit the objects and the library will take care of writing every thing to the database in a transactional maner.
 
 
-TUTORIAL
----------
+# NSTALL
 
+    npm install syncorm
+
+# TUTORIAL
 
 ## Create an example database
 
@@ -61,105 +62,103 @@ And for this example we will add some data to this database:
 	('idperson', 1);
 
 
-## Install
 
-npm install syncorm
 
 ## Table definition
 
 The first thing that we need to do, is define the tables:
 
-var db = require('syncorm').Database({
-	driver: "mysql",
-	host: '127.0.0.1',
-	port: 8889,
-	user: 'root',
-	password: 'root',
-	database: 'peopleheights'
-	log: true,
-});
+    var db = require('syncorm').Database({
+    	driver: "mysql",
+    	host: '127.0.0.1',
+    	port: 8889,
+    	user: 'root',
+    	password: 'root',
+    	database: 'peopleheights'
+    	log: true,
+    });
 
-db.define({
-	name: "Person",
-	table: "persons",
-	id: "idperson",
-	fields: {
-		idperson: {
-			type: "integer",
-			def: function () {
-				return db.sequences.idperson.inc();
-			}
-		},
-		firstname: "string",
-		lastname: "string",
-		birthdate: "date"
-	},
-	calculatedFields: {
-		age: function() {
-			var today = new Date();
-			var birthDate = new Date(dateString);
-			var age = today.getFullYear() - birthDate.getFullYear();
-			var m = today.getMonth() - birthDate.getMonth();
-			if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
-			{
-				age--;
-			}
-			return age;
-		}
-	},
-	indexes: {
-		lname2person: function(p) {
-			return p.lname;
-		}
-	}
-});
+    db.define({
+    	name: "Person",
+    	table: "persons",
+    	id: "idperson",
+    	fields: {
+    		idperson: {
+    			type: "integer",
+    			def: function () {
+    				return db.sequences.idperson.inc();
+    			}
+    		},
+    		firstname: "string",
+    		lastname: "string",
+    		birthdate: "date"
+    	},
+    	calculatedFields: {
+    		age: function() {
+    			var today = new Date();
+    			var birthDate = new Date(dateString);
+    			var age = today.getFullYear() - birthDate.getFullYear();
+    			var m = today.getMonth() - birthDate.getMonth();
+    			if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
+    			{
+    				age--;
+    			}
+    			return age;
+    		}
+    	},
+    	indexes: {
+    		lname2person: function(p) {
+    			return p.lname;
+    		}
+    	}
+    });
 
-db.define({
-	name: "Measure",
-	table: "measures",
-	id: "idmeasure",
-	fields: {
-		idmeasure: {
-			type: "integer",
-			def: function () {
-				return db.sequences.idmeasure.inc();
-			}
-		},
-		idperson: "integer"
-		timestamp: "datetime",
-		height: "float",
-		parameters: "json"
-	}
-	relations: {
-		person: {
-			type: "Person",
-			link: ["idperson"],
-			reverse: "measures"
-		}
-	}
-});
+    db.define({
+    	name: "Measure",
+    	table: "measures",
+    	id: "idmeasure",
+    	fields: {
+    		idmeasure: {
+    			type: "integer",
+    			def: function () {
+    				return db.sequences.idmeasure.inc();
+    			}
+    		},
+    		idperson: "integer"
+    		timestamp: "datetime",
+    		height: "float",
+    		parameters: "json"
+    	}
+    	relations: {
+    		person: {
+    			type: "Person",
+    			link: ["idperson"],
+    			reverse: "measures"
+    		}
+    	}
+    });
 
-db.define({
-	name: "Sequence",
-	table: "sequences",
-	id: "name",
-	fields: {
-		name: "string",
-		last: "integer"
-	},
-	methods: {
-		inc: function () {
-			this.last += 1;
-			return this.last;
-		}
-	}
-});
+    db.define({
+    	name: "Sequence",
+    	table: "sequences",
+    	id: "name",
+    	fields: {
+    		name: "string",
+    		last: "integer"
+    	},
+    	methods: {
+    		inc: function () {
+    			this.last += 1;
+    			return this.last;
+    		}
+    	}
+    });
 
-db.loadAll();
+    db.loadAll();
 
-db.on("init", function() {
-	// The database is fully loaded in memory.
-});
+    db.on("init", function() {
+    	// The database is fully loaded in memory.
+    });
 
 ## Reading data.
 
@@ -167,7 +166,6 @@ db.on("init", function() {
 Let's start wit a simple example. Imagine that you just want to console out the full name for person with idperson=56.
 
 	console.log(db.persons[65].firstname + " " + db.persons[65].lastname);
-	
 
 Imagine that you now want to print all the measures of the person with id person 56.
 

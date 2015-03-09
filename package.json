@@ -5,9 +5,10 @@
   },
   "name": "syncorm",
   "description": "Syncronous ORM",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "repository": {
-    "url": ""
+    "type": "git",
+    "url": "https://github.com/jbaylina/syncorm.git"
   },
   "main": "./lib/syncorm",
   "keywords": [
@@ -18,21 +19,18 @@
     "mapping"
   ],
   "dependencies": {
-    "underscore": "~1.6.0",
+    "async": "^0.9.0",
+    "bintrees": "~1.0.0",
     "mysql": "~2.2.0",
-    "events": "~1.0.0",
-    "q": "~1.0.1",
-    "bintrees": "~1.0.0"
+    "node-uuid": "^1.4.3",
+    "pluralize": "^1.1.2",
+    "underscore": "^1.6.0"
   },
   "engines": {
     "node": "*"
   },
   "scripts": {
-    "test": "nodeunit ./test/tests.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jbaylina/syncorm.git"
+    "test": "mocha"
   },
   "licenses": [
     {
@@ -44,5 +42,3 @@
     "nodeunit": "~0.8.6"
   }
 }
-
-
