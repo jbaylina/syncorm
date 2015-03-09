@@ -1,5 +1,7 @@
 # INTRODUCTION
 
+[![Build Status](https://travis-ci.org/jbaylina/syncorm.svg?branch=master)](https://travis-ci.org/jbaylina/syncorm)
+
 The main idea of this orm is to load the full database in memory at the begining of the execution.
 
 Every record in the database is mapped to a javascript object. And you have a dictionary for each table where the key is the primary key and the value is the object representing the record.
