@@ -27,11 +27,14 @@
     "underscore": "^1.6.0",
     "events": "~1.0.0"
   },
+  "devDependencies": {
+   "mocha": "*"
+  },
   "engines": {
     "node": "*"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "node_modules/.bin/mocha"
   },
   "licenses": [
     {
