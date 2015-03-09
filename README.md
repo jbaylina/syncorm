@@ -11,24 +11,14 @@ So you can access all the data directly with javascript objects. It is very usef
 
 In the same way, you can also write to the database in a short transaction. You just edit the objects and the library will take care of writing every thing to the database in a transactional maner.
 
-The process to write to the databese is the next:
-
-1.- Start a transaction.
-2.- Write directly to the objects that you want to modify.
-3.- Commit the transaction.
-
-The start transaction is an asyncronous method that just guaranty that no one else is in a transaction.
-When you are in a transaction, you can Create new objects, modify the objects or delete objects in the javascript way.
-
-When you are finish, you just call the commit() method. This asyncronous method, starts a database transaction (START TRANSACTION), does all the INSERTs/UPDATEs/DELETEs to the database necessary to apply all the changes made in in the momory objects to the database, and finally runs a database COMMIT. After that, a promise is resolved (or a callback is called).
-
-In the middle of a transaction, you can also call a rollback(), and the Objects returns the data to the original state when you started the transaction.
-
 
 TUTORIAL
 ---------
 
-Imagine a database called peoplesheight with two tables: persons and measures. The idea is to collect people's heigth at different moments of his live in order to construct the growth curves. Each person has many measures taked at diferent moment of his live. The definition of the tables could be:
+
+## Create an example database
+
+Imagine an example database with two tables: persons and measures. The idea is to collect people's heigth at different moments of his live in order to construct the growth curves. Each person has many measures taked at diferent moment of his live. The definition of the tables could be:
 
 	CREATE TABLE `measures` (
 	  `idmeasure` int(11) NOT NULL,
@@ -70,208 +60,189 @@ And for this example we will add some data to this database:
 	('idmeasure', 4),
 	('idperson', 1);
 
+
+## Install
+
+npm install syncorm
+
+## Table definition
+
+The first thing that we need to do, is define the tables:
+
+var db = require('syncorm').Database({
+	driver: "mysql",
+	host: '127.0.0.1',
+	port: 8889,
+	user: 'root',
+	password: 'root',
+	database: 'peopleheights'
+	log: true,
+});
+
+db.define({
+	name: "Person",
+	table: "persons",
+	id: "idperson",
+	fields: {
+		idperson: {
+			type: "integer",
+			def: function () {
+				return db.sequences.idperson.inc();
+			}
+		},
+		firstname: "string",
+		lastname: "string",
+		birthdate: "date"
+	},
+	calculatedFields: {
+		age: function() {
+			var today = new Date();
+			var birthDate = new Date(dateString);
+			var age = today.getFullYear() - birthDate.getFullYear();
+			var m = today.getMonth() - birthDate.getMonth();
+			if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
+			{
+				age--;
+			}
+			return age;
+		}
+	},
+	indexes: {
+		lname2person: function(p) {
+			return p.lname;
+		}
+	}
+});
+
+db.define({
+	name: "Measure",
+	table: "measures",
+	id: "idmeasure",
+	fields: {
+		idmeasure: {
+			type: "integer",
+			def: function () {
+				return db.sequences.idmeasure.inc();
+			}
+		},
+		idperson: "integer"
+		timestamp: "datetime",
+		height: "float",
+		parameters: "json"
+	}
+	relations: {
+		person: {
+			type: "Person",
+			link: ["idperson"],
+			reverse: "measures"
+		}
+	}
+});
+
+db.define({
+	name: "Sequence",
+	table: "sequences",
+	id: "name",
+	fields: {
+		name: "string",
+		last: "integer"
+	},
+	methods: {
+		inc: function () {
+			this.last += 1;
+			return this.last;
+		}
+	}
+});
+
+db.loadAll();
+
+db.on("init", function() {
+	// The database is fully loaded in memory.
+});
+
+## Reading data.
+
+
 Let's start wit a simple example. Imagine that you just want to console out the full name for person with idperson=56.
 
-The program would be:
-
-	var db = require('./peopleheights').db;
-		U = require('underscore');
-
-	var idperson = 1;
-
-	db.on('init', function() {
-		console.log(db.persons[idperson].firstname + " " + db.persons[idperson].lastname);
-	});
-
-
-The module peoplesheigth is where you specify how the database is mapped in memory. We will see later how to write this module.
+	console.log(db.persons[65].firstname + " " + db.persons[65].lastname);
+	
 
 Imagine that you now want to print all the measures of the person with id person 56.
 
-	var db = require('./peopleheights').db,
-		U = require('underscore');
+	var _ = require('undersocore');
 
-	var idperson = 1;
-
-	db.on('init', function() {
-		console.log(db.persons[idperson].firstname + " " + db.persons[idperson].lastname);
-		U.each(db.persons[idperson].measures, function(measure) {
-			console.log(measure.timestamp.toUTCString() + "\t" + measure.height.toFixed(2));
-		});
+	_.each(db.persons[56].measures, function(measure) {
+		console.log(measure.timestamp.toUTCString() + "\t" + measure.height.toFixed(2));
 	});
 
 
 Lets now see how we would add a person and the first measure to the database:
 
-	var db = require('./peopleheights').db,
-		U = require('underscore');
 
-	db.on('init', function() {
-		return db.startTransaction()
-			.then(function() {
-				var person, measure;
-				person = new db.Person({
-					firstname: "John",
-					lastname: "Smith"
-				});
-				measure = new db.Measure({
-					idperson: person.idperson,
-					height: 1.80,
-					timestamp: new Date()
-				});
-				return db.commit();
-			})
-			.then(function() {
-				console.log("The person and the measure has been added in a single transaction");
-			})
-			.fail(function(err) {
-				console.log(err.stack);
-				console.log("Some thing went wrong so we rollback");
-				db.rollback();
-			});
+	db.doTransaction(function() {
+		var person, measure;
+		person = new db.Person({
+			firstname: "John",
+			lastname: "Smith"
+		});
+		measure = new db.Measure({
+			idperson: person.idperson,
+			height: 1.80,
+			timestamp: new Date()
+		});
+	}, function(err) {
+		if (err) {
+			console.log("An error ocurred during the transaction: " + err.toString());
+		} else {
+			console.log("A new persona and measure are saved to the database");
+		}
 	});
 
-We forgot to add the John's birthdate. Imagine also that we want to delete all the Johns measures in the same transaction.
 
-	var db = require('./peopleheights').db,
-		U = require('underscore');
+We forgot to add the John's birthdate, so we can do another transaction to add it:
 
-	db.on('init', function() {
-		return db.startTransaction()
-			.then(function() {
-				var person;
-				person= U.findWhere(db.persons, {
+	db.doTransaction(function() {
+		var person= _.findWhere(db.persons, {
 					firstname: "John",
 					lastname: "Smith"
 				});
 
-				if (!person) {
-					throw new Error("John Smith not found");
-				}
+		if (!person) {
+			throw new Error("John Smith not found");
+		}
 
-				person.birthdate = new Date("1973-04-03");
+		person.birthdate = new Date("1973-04-03");
 
-				U.each(person.measures, function(measure) {
-					measure.remove();
+	}, function(err) {
+		if (err) {
+			console.log("An error ocurred during the transaction: " + err.toString());
+		} else {
+			console.log("A new persona and measure are saved to the database");
+		}
+	});
+
+
+Lets now delete all the Johns measures in the same transaction.
+
+	db.doTransaction(function() {
+		var person= _.findWhere(db.persons, {
+					firstname: "John",
+					lastname: "Smith"
 				});
 
-				return db.commit();
-			})
-			.then(function() {
-				console.log("Updates and deletes has been made");
-			})
-			.fail(function(err) {
-				console.log(err.stack);
-				console.log("Some thing went wrong so we rollback");
-				db.rollback();
-			});
-	});
+		if (!person) {
+			throw new Error("John Smith not found");
+		}
 
+		person.remove();
 
-Defining the database
----------------------
-
-Here is the file to define the database. It's self explanatory:
-
-	var syncorm = require("syncorm");
-
-	var db = new syncorm.Database({
-			driver: "mysql",
-			sqlLog: true,
-	        host: '127.0.0.1',
-	        port: 8889,
-	        user: 'root',
-	        password: 'root',
-	        database: 'peopleheights'
-	    });
-
-	db.define({
-		name: "Person",
-		table: "persons",
-		id: "idperson",
-		fields: {
-			idperson: {
-				type: "integer",
-				def: function () {
-					return db.sequences.idperson.inc();
-				}
-			},
-			firstname: {
-				type: "string",
-				size: 255
-			},
-			lastname: {
-				type: "string",
-				size: 255
-			},
-			birthdate: "date"
-		},
-		calculatedFields: {
-			age: function() {
-				var today = new Date();
-				var birthDate = new Date(dateString);
-				var age = today.getFullYear() - birthDate.getFullYear();
-				var m = today.getMonth() - birthDate.getMonth();
-				if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
-				{
-					age--;
-				}
-				return age;
-			}
-		},
-		indexes: {
-			lname2person: function(p) {
-				return p.lname;
-			}
+	}, function(err) {
+		if (err) {
+			console.log("An error ocurred during the transaction: " + err.toString());
+		} else {
+			console.log("A new persona and measure are saved to the database");
 		}
 	});
-
-
-	db.define({
-		name: "Measure",
-		table: "measures",
-		id: "idmeasure",
-		fields: {
-			idmeasure: {
-				type: "integer",
-				def: function () {
-					return db.sequences.idmeasure.inc();
-				}
-			},
-			idperson: {
-				type: "Person",
-				name: "person",
-				reverse: "measures"
-			},
-			timestamp: "datetime",
-			height: "float",
-			parameters: "json"
-		}
-	});
-
-	db.define({
-		name: "Sequence",
-		table: "sequences",
-		id: "name",
-		fields: {
-			name: "string",
-			last: "integer"
-		},
-		methods: {
-			inc: function () {
-				this.last += 1;
-				return this.last;
-			}
-		}
-	});
-
-	exports.db = db;
-
-	db.loadAll();
-
-
-
-
-
-
 
