@@ -178,6 +178,8 @@ Imagine that you now want to print all the measures of the person with id person
 	});
 
 
+## Writing transactions.
+
 Lets now see how we would add a person and the first measure to the database:
 
 
@@ -245,4 +247,59 @@ Lets now delete all the Johns measures in the same transaction.
 			console.log("A new persona and measure are saved to the database");
 		}
 	});
+
+
+## Calculated fields
+
+    db.define({
+        name: "Person",
+        table: "persons",
+        id: "idPerson",
+        fields: {
+            idPerson: "integer",
+            name: "string",
+            birthDate: "integer"
+        },
+        calcFields: {
+            age: function () {
+                var today = new Date();
+                var age = today.getFullYear() - this.birthDate.getFullYear();
+                var m = today.getMonth() - this.birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < this.birthDate.getDate()))
+                {
+                    age--;
+                }
+                return age;
+            }
+        }
+    });
+
+## Methods
+
+    db.define({
+        name: "Sequence",
+        table: "sequences",
+        id: "name",
+        fields: {
+            name: "string",
+            last: "integer"
+        },
+        methods: {
+            inc: function () {
+                this.last += 1;
+                return this.last;
+            }
+        }
+    });
+
+As you can see, the method inc can be caled for each record.
+
+## Convert to JSON
+
+Echa record can be converted to a regular javascript object whith the function
+toJSON
+
+    res.json(person.toJSON());
+
+
 
