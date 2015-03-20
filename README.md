@@ -302,4 +302,29 @@ toJSON
     res.json(person.toJSON());
 
 
+## Indexes
+
+   var IdxBtree  = require("syncorm-idxbtree");
+
+   db.define({
+        name: "User",
+        table: "users",
+        id: "idUser",
+        fields: {
+            idUser: "string",
+            password: "string",
+            email: "string"
+        },
+        indexes: {
+            userByEmail: new IdxBtree({key: "email"})
+        }
+    });
+
+    var user = db.usersByEmail.lowerBound("email@example.com").data();
+
+    if (user) {
+        consloe.log(JSON.stringify(user.toJSON()));
+    }
+
+
 

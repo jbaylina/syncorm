@@ -65,7 +65,7 @@ function createTestDatabase(done) {
     }, function(cb) {
         connection.query(
             'CREATE  TABLE `syncorm_test`.`players` (' +
-              '`idPlayer` INT NOT NULL ,' +
+              '`idPlayer` INT NOT NULL AUTO_INCREMENT,' +
               '`idTeam` INT NULL ,' +
               '`name` VARCHAR(32) NULL ,' +
               '`email` VARCHAR(64) NULL ,' +
@@ -81,6 +81,19 @@ function createTestDatabase(done) {
             " INSERT INTO `syncorm_test`.`examples1` " +
             "        (`id`,`int`, `string8` ,`text`  ,`date`      ,`datetime`               ,`double`, `decimal112`  ,`boolean`)" +
             " VALUES ('1' ,-123     , 'a string','a text','2015-03-09','2015-04-09 13:14:15','3.1416', '123456789.01','1'      )", cb);
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`companies` (' +
+                         ' `idCompany` int(11) NOT NULL AUTO_INCREMENT,' +
+                         ' `name` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,' +
+                         '  PRIMARY KEY (`idCompany`)' +
+                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`employers` (' +
+                         ' `idEmployer` int(11) NOT NULL AUTO_INCREMENT,' +
+                         ' `idCompany` int(11) NOT NULL,' +
+                         ' `name` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,' +
+                         '  PRIMARY KEY (`idEmployer`)' +
+                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
     }], done);
 }
 
@@ -164,6 +177,40 @@ function defineDatabase(db) {
             }
         },
     });
+    db.define({
+        name: "Company",
+        table: "companies",
+        id: "idCompany",
+        fields: {
+            idCompany: {
+                type: "integer",
+                autoincrement: true
+            },
+            name: "string"
+        }
+    });
+    db.define({
+        name: "Employer",
+        table: "employers",
+        id: "idEmployer",
+        fields: {
+            idEmployer: {
+                type: "integer",
+                autoincrement: true
+
+            },
+            idCompany: "integer",
+            name: "string"
+        },
+        relations: {
+            company: {
+                type: "Company",
+                link: "idCompany",
+                reverse: "employers"
+            }
+        }
+    });
+
     db.newId = function(dbid) {
         if (this.dbids[dbid]) {
             this.dbids[dbid].last += 1;
@@ -195,7 +242,9 @@ describe('Sync orm test', function() {
                 assert.equal(_.size(db.examples1), 1);
                 done();
             });
-            db.loadAll();
+            db.loadAll(function(err) {
+                assert.ifError(err);
+            });
         });
 //    });
 //    describe('Testing read values',function() {
@@ -492,6 +541,29 @@ describe('Sync orm test', function() {
             });
         });
     });
+    describe('Autoincrement',function() {
+        it("Should change the key of an autoincrement field", function(done) {
+            db.doTransaction(function() {
+                var company = new db.Company({name: "MyCompany"});
+            }, function(err) {
+                assert.ifError(err);
+                assert(db.companies[1]);
+                assert.equal(db.companies[1].idCompany, 1);
+                done();
+            });
+        });
+        it("Should change the key of the related objects", function(done) {
+            var employer;
+            db.doTransaction(function() {
+                employer = new db.Employer({name: "Jordi", idCompany: 1});
+            }, function(err) {
+                assert.ifError(err);
+                assert(db.employers[1]);
+                assert.deepEqual(db.companies[1].employers[1], employer);
+                done();
+            });
+        });
+     });
 
 
 });

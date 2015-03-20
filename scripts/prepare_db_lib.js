@@ -75,17 +75,23 @@ function prepareTable(db, t, cb) {
 			S += "new.`" + f + "`";
 		});
 		q +=  S + "); \n"+
-				"    INSERT INTO dbops SET `user` = @dbops_user, \n" +
+				"    IF newkey <> oldkey THEN \n" +
+				"    	  INSERT INTO dbops SET `user` = @dbops_user, \n" +
+				"                          `table` =  '" + t +"', \n" +
+				"                          `op` = 'DELETE', \n" +
+				"                          `datetime` = NOW(),\n" +
+				"                          `key` = @oldkey; \n" +
+				"         INSERT INTO dbops SET `user` = @dbops_user, \n" +
+				"                               `table` =  '" + t +"', \n" +
+				"                               `op` = 'INSERT', \n" +
+				"                               `datetime` = NOW(),\n" +
+				"                               `key` = @newkey; \n" +
+				"    ELSE \n"+
+				"    	   INSERT INTO dbops SET `user` = @dbops_user, \n" +
 				"                          `table` =  '" + t +"', \n" +
 				"                          `op` = 'UPDATE', \n" +
 				"                          `datetime` = NOW(),\n" +
 				"                          `key` = @oldkey; \n" +
-				"    IF newkey <> oldkey THEN \n" +
-				"         INSERT INTO dbops SET `user` = @dbops_user, \n" +
-				"                               `table` =  '" + t +"', \n" +
-				"                               `op` = 'UPDATE', \n" +
-				"                               `datetime` = NOW(),\n" +
-				"                               `key` = @newkey; \n" +
 				"    END IF; \n" +
 				"END; \n";
 		db.query(q, cb2);
