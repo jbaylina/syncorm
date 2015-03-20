@@ -17,7 +17,7 @@ In the same way, you can also write to the database in a short transaction. You 
 
     npm install syncorm
 
-# TUTORIAL
+# TUTORIAL - Geting started
 
 ## Create an example database
 
@@ -304,9 +304,11 @@ toJSON
 
 ## Indexes
 
-   var IdxBtree  = require("syncorm-idxbtree");
+You con use any data structore to manage  the data.
 
-   db.define({
+    var IdxBtree  = require("syncorm-idxbtree");
+
+    db.define({
         name: "User",
         table: "users",
         id: "idUser",
