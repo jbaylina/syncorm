@@ -5,7 +5,7 @@
   },
   "name": "syncorm",
   "description": "Syncronous ORM",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/jbaylina/syncorm.git"
@@ -20,15 +20,17 @@
   ],
   "dependencies": {
     "async": "^0.9.0",
+    "commander": "^2.7.1",
+    "events": "~1.0.0",
     "mysql": "~2.2.0",
     "node-uuid": "^1.4.3",
     "pluralize": "^1.1.2",
-    "underscore": "^1.6.0",
-    "events": "~1.0.0"
+    "prompt": "^0.2.14",
+    "underscore": "^1.6.0"
   },
   "devDependencies": {
-   "mocha": "*",
-   "syncorm-idxbtree": "*"
+    "mocha": "*",
+    "syncorm-idxbtree": "*"
   },
   "engines": {
     "node": "*"
