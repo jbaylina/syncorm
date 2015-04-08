@@ -75,7 +75,7 @@ function prepareTable(db, t, cb) {
 			S += "new.`" + f + "`";
 		});
 		q +=  S + "); \n"+
-				"    IF newkey <> oldkey THEN \n" +
+				"    IF @newkey <> @oldkey THEN \n" +
 				"    	  INSERT INTO dbops SET `user` = @dbops_user, \n" +
 				"                          `table` =  '" + t +"', \n" +
 				"                          `op` = 'DELETE', \n" +
