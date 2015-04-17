@@ -42,7 +42,7 @@ async.series([function(cb) {
 	prompt.get({ properties: {
 		pwddb: {
 			hidden:true,
-			description: program.from+ " password: "
+			description: arr[5]+ " password: "
 		}
 
 	}}, function(err, result) {
