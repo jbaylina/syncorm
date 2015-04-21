@@ -20,7 +20,8 @@ var connectionParams = {
             "password": "",
             "timezone": "utc",
             "database": "syncorm_test",
-            "synchronize": false
+            "synchronize": false,
+            "dateStrings": true
         };
 
 var connection;
@@ -33,7 +34,8 @@ function createTestDatabase(done) {
     connection = mysql.createConnection({
         host: "127.0.0.1",
         timezone: "utc",
-        user: "root"
+        user: "root",
+        dateStrings: true
     });
     async.series([function(cb) {
         connection.connect(cb);
@@ -94,6 +96,19 @@ function createTestDatabase(done) {
                          ' `name` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,' +
                          '  PRIMARY KEY (`idEmployer`)' +
                          ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`test_dates` (' +
+                         ' `id` int(11) NOT NULL,' +
+                         ' `dlocal` date  NULL,' +
+                         ' `dutc` date  NULL,' +
+                         ' `dtlocal` datetime  NULL,' +
+                         ' `dtutc` datetime  NULL,' +
+                         ' `tslocal` timestamp NULL,' +
+                         ' `tsutc` timestamp NULL,' +
+                         '  PRIMARY KEY (`id`)' +
+                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+
     }], done);
 }
 
@@ -208,6 +223,29 @@ function defineDatabase(db) {
                 link: "idCompany",
                 reverse: "employers"
             }
+        }
+    });
+    db.define({
+        name: "TestDate",
+        table: "test_dates",
+        id: "id",
+        fields: {
+            id: "integer",
+            dlocal : {
+                type: "date",
+                tz: "Europe/Madrid"
+            },
+            dutc: "date",
+            dtlocal : {
+                type: "datetime",
+                tz: "Europe/Madrid"
+            },
+            dtutc: "datetime",
+            tslocal : {
+                type: "datetime",
+                tz: "Europe/Madrid"
+            },
+            tsutc: "datetime"
         }
     });
 
@@ -347,7 +385,7 @@ describe('Sync orm test', function() {
             }, function(err) {
                 assert.ifError(err);
                 assert.equal(db.examples1[1].date.toISOString(), "2015-12-29T00:00:00.000Z");
-                assertSQL("SELECT `date` from examples1", [{date: new Date("2015-12-29 UTC")}], done);
+                assertSQL("SELECT `date` from examples1", [{date: "2015-12-29"}], done);
             });
         });
         it("should update date with String", function(done) {
@@ -356,7 +394,7 @@ describe('Sync orm test', function() {
             }, function(err) {
                 assert.ifError(err);
                 assert.equal(db.examples1[1].date.toISOString(), "2016-02-29T00:00:00.000Z");
-                assertSQL("SELECT `date` from examples1", [{date: new Date("2016-02-29 UTC")}], done);
+                assertSQL("SELECT `date` from examples1", [{date: "2016-02-29"}], done);
             });
         });
     });
@@ -563,7 +601,45 @@ describe('Sync orm test', function() {
                 done();
             });
         });
-     });
+    });
+    describe('Date',function() {
+        it("Should save correctly utc - datetime to database a datetime", function(done) {
+            db.doTransaction(function() {
+                var D = new Date("2014-12-31 23:55:55 UTC");
+                var testDate = new db.TestDate({id: "1", dtutc: D});
+            }, function(err) {
+                assert.ifError(err);
+                assertSQL("SELECT `dtutc` from test_dates WHERE id=1", [{dtutc: "2014-12-31 23:55:55"}], done);
+            });
+        });
+        it("Should save correctly local - datetime to database a datetime", function(done) {
+            db.doTransaction(function() {
+                var D = new Date("2014-12-31 23:55:55 UTC");
+                var testDate = new db.TestDate({id: "2", dtlocal: D});
+            }, function(err) {
+                assert.ifError(err);
+                assertSQL("SELECT `dtlocal` from test_dates WHERE id=2", [{dtlocal: "2015-01-01 00:55:55"}], done);
+            });
+        });
+        it("Should save correctly utc - datetime to database a datetime", function(done) {
+            db.doTransaction(function() {
+                var D = new Date("2014-12-31 23:55:55 UTC");
+                var testDate = new db.TestDate({id: "3", tsutc: D});
+            }, function(err) {
+                assert.ifError(err);
+                assertSQL("SELECT `tsutc` from test_dates WHERE id=3", [{tsutc: "2014-12-31 23:55:55"}], done);
+            });
+        });
+        it("Should save correctly local - datetime to database a datetime", function(done) {
+            db.doTransaction(function() {
+                var D = new Date("2014-12-31 23:55:55 UTC");
+                var testDate = new db.TestDate({id: "4", tslocal: D});
+            }, function(err) {
+                assert.ifError(err);
+                assertSQL("SELECT `tslocal` from test_dates WHERE id=4", [{tslocal: "2015-01-01 00:55:55"}], done);
+            });
+        });
+    });
 
 
 });
