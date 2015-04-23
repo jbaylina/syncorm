@@ -5,7 +5,7 @@
   },
   "name": "syncorm",
   "description": "Syncronous ORM",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/jbaylina/syncorm.git"
@@ -19,10 +19,10 @@
     "mapping"
   ],
   "dependencies": {
-    "async": "^0.9.0",
+    "async": "~0.9.0",
     "commander": "^2.7.1",
-    "events": "~1.0.0",
-    "mysql": "~2.2.0",
+    "events": "~1.0.2",
+    "mysql": "~2.6.2",
     "node-uuid": "^1.4.3",
     "pluralize": "^1.1.2",
     "prompt": "^0.2.14",
@@ -31,13 +31,14 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "syncorm-idxbtree": "*"
+    "syncorm-idxbtree": "*",
+    "heapdump": "^0.3.5"
   },
   "engines": {
     "node": "*"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha"
+    "test": "node_modules/.bin/mocha --expose-gc"
   },
   "licenses": [
     {

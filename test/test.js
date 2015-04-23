@@ -9,11 +9,28 @@ var mysql = require('mysql');
 var _ = require('underscore');
 var prepareDB = require("../scripts/prepare_db_lib.js");
 var IdxBtree  = require("syncorm-idxbtree");
+var heapdump = require("heapdump");
+
+var mem = function(S,f) {
+    console.log(S);
+    console.log('MEMORY USED:', process.memoryUsage().heapUsed / 1024 / 1024, 'MB');
+    console.log('MEMORY TOTATL:', process.memoryUsage().heapTotal / 1024 / 1024, 'MB');
+    console.log('MEMORY SYSTEM:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+    if (global.gc) {
+        global.gc();
+        console.log('AGC MEMORY USED:', process.memoryUsage().heapUsed / 1024 / 1024, 'MB');
+        console.log('AGC MEMORY TOTATL:', process.memoryUsage().heapTotal / 1024 / 1024, 'MB');
+        console.log('AGC MEMORY SYSTEM:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+    }
+    heapdump.writeSnapshot(f+".heapsnapshot");
+
+    console.log("--");
+};
 
 
 var connectionParams = {
             "driver": "mysql",
-            "sqlLog": true,
+            "sqlLog": false,
             "host": "127.0.0.1",
             "port": 3306,
             "user": "root",
@@ -534,7 +551,7 @@ describe('Sync orm test', function() {
     });
     describe('Syncronized',function() {
         it("prepare db for syncronization", function(done) {
-            this.timeout(10000);
+            this.timeout(20000);
             prepareDB(connection,function(err) {
                 assert.ifError(err);
                 done();
@@ -639,7 +656,50 @@ describe('Sync orm test', function() {
                 assertSQL("SELECT `tslocal` from test_dates WHERE id=4", [{tslocal: "2015-01-01 00:55:55"}], done);
             });
         });
+        it("Should has no memry leaks", function(done) {
+            this.timeout(200000);
+            var nRegs = 10000;
+            var sizeReg = 10000;
+            var offsetId = 1000;
+            mem("Memory Before insering","s1");
+            var beforeMem = process.memoryUsage().heapUsed;
+            async.timesSeries(nRegs, function(n, cb) {
+                var id = n+offsetId;
+                var t = "";
+                while (t.length<sizeReg) t+="X";
+                connection.query (
+                    " INSERT INTO `syncorm_test`.`examples1` (`id`, `text`) " +
+                    "   VALUES ( '" + id + "', '" + t + "')", cb);
+            }, function(err) {
+                assert.ifError(err);
+                mem("Memory After insering", "s2");
+                db.doTransaction(function() {
+                    mem("Memory After insering and refreshing","s3");
+                    var afterMem = process.memoryUsage().heapUsed;
+                    assert(afterMem >= beforeMem + nRegs*sizeReg - 10000000);
+                    var i;
+                    for (i=0;i<nRegs; i+=1) {
+                        var id = i+offsetId;
+                        db.examples1[id].remove();
+                    }
+                }, function(err) {
+                    assert.ifError(err);
+                    assertSQL("SELECT count(*) as c from examples1", [{c: 1}], function() {
+                        mem("Memory After deleting","s4");
+                        var afterAfterMem = process.memoryUsage().heapUsed;
+                        assert(afterAfterMem < beforeMem + 1000000);
+                        done();
+                    });
+                });
+
+            });
+
+
+
+        });
     });
 
 
 });
+
+
