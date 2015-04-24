@@ -328,5 +328,63 @@ You con use any data structore to manage  the data.
         consloe.log(JSON.stringify(user.toJSON()));
     }
 
+## Triggers
+
+    db.define({
+        name: "User",
+        table: "users",
+        id: "idUser",
+        fields: {
+            idUser: "string",
+            password: "string",
+            email: "string"
+        },
+        triggers: [{
+            add: function(obj) {
+                console.log(JSON.stringify(obj.toJSON()) + " added");
+            },
+            remove: function(obj) {
+                console.log(JSON.stringify(obj.toJSON()) + " removed");
+            }
+        }]
+    });
+
+When updated, an add and a remove is called.
+
+This is usefull to maintain a parallel data structure like an index.
+
+
+## Multikey
+
+    db.define({
+        name: "Object",
+        table: "objects",
+        id: ["id1", "id2"]
+        fields: {
+            id1: "integer",
+            id2: "string",
+            afield: "string"
+        },
+    });
+
+You can access this way:
+
+    db.objects[1]["a"]
+
+Or better:
+
+    var mk = require('syncorm').mk;
+
+    mk.get(db.objects, [1,"a"]);
+
+### mk sublibrary
+
+With this mk you can also call all keys of an object
+
+    mk.each(db.objects, 2, function(obj, k) {
+
+    });
+
+
 
 

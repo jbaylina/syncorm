@@ -11,6 +11,8 @@ var prepareDB = require("../scripts/prepare_db_lib.js");
 var IdxBtree  = require("syncorm-idxbtree");
 var heapdump = require("heapdump");
 
+var mk = syncorm.mk;
+
 var mem = function(S,f) {
     console.log(S);
     console.log('MEMORY USED:', process.memoryUsage().heapUsed / 1024 / 1024, 'MB');
@@ -95,6 +97,14 @@ function createTestDatabase(done) {
               '`id` VARCHAR(16) NOT NULL ,' +
               '`last` INT NOT NULL ,' +
               'PRIMARY KEY (`id`) )', cb);
+    }, function(cb) {
+        connection.query(
+            'CREATE  TABLE `syncorm_test`.`multikey_objects` (' +
+              '`id1` INT NOT NULL , ' +
+              '`id2` VARCHAR(16) NOT NULL , ' +
+              '`idDate` DATE NOT NULL , ' +
+              '`text` VARCHAR(64) NULL, ' +
+              'PRIMARY KEY (`id1`, `id2`, `idDate`) )', cb);
     }, function(cb) {
         connection.query(
             " INSERT INTO `syncorm_test`.`examples1` " +
@@ -263,6 +273,19 @@ function defineDatabase(db) {
                 tz: "Europe/Madrid"
             },
             tsutc: "datetime"
+        }
+    });
+
+    db.define({
+        name: "MultikeyObject",
+        table: "multikeyObjects",
+        dbTableName: "multikey_objects",
+        id: ["id1","id2","idDate"],
+        fields: {
+            id1: "integer",
+            id2: "string",
+            idDate: "date",
+            text: "string"
         }
     });
 
@@ -656,6 +679,23 @@ describe('Sync orm test', function() {
                 assertSQL("SELECT `tslocal` from test_dates WHERE id=4", [{tslocal: "2015-01-01 00:55:55"}], done);
             });
         });
+    });
+    describe('Multi key',function() {
+        it("Should save a multikey correctly", function(done) {
+            var D=new Date("2015-04-24 UTC");
+            var id2 = "a";
+            db.doTransaction(function() {
+                var newObj = new db.MultikeyObject({id1: 1, id2: "a", idDate: D, text: "Hello"});
+                assert.equal(db.multikeyObjects[1][id2][D].text, "Hello");
+            }, function(err) {
+                assert.ifError(err);
+                assert.equal(db.multikeyObjects[1][id2][D].text, "Hello");
+                assert.deepEqual(mk.keys(db.multikeyObjects, 3), [[1,id2,D.toString()]]);
+                assertSQL("SELECT `text` from multikey_objects WHERE id1=1 and id2='a' and idDate='2015-04-24'", [{text: "Hello"}], done);
+            });
+        });
+    });
+    describe('Memory leaks',function() {
         it("Should has no memry leaks", function(done) {
             this.timeout(200000);
             var nRegs = 10000;
