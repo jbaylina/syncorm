@@ -527,51 +527,6 @@ describe('Sync orm test', function() {
             });
         });
     });
-    describe('Indexes',function() {
-        it("index should update when inserted", function(done) {
-            var idPlayer;
-            db.doTransaction(function() {
-                var player = new db.Player({name: "Jordi", email: "jordi@test.com"});
-                idPlayer = player.idPlayer;
-                var indexedPlayer = db.playerByEmail.lowerBound("jordi@test.com").data();
-                assert.equal(player, indexedPlayer);
-            }, function(err) {
-                assert.ifError(err);
-                var indexedPlayer2 = db.playerByEmail.lowerBound("jordi@test.com").data();
-                assert.equal(db.players[idPlayer], indexedPlayer2);
-                done();
-            });
-        });
-        it("index should update index when deleted", function(done) {
-            var idPlayer,prevPlayerB, curPlayerB, nextPlayerB;
-            var prevPlayerA, curPlayerT, nextPlayerA;
-            var prevPlayerT, nextPlayerT;
-            db.doTransaction(function() {
-                var itB = db.playerByEmail.lowerBound("jordi@test.com");
-                prevPlayerB = itB.prev();
-                curPlayerB = itB.next();
-                nextPlayerB = itB.next();
-                idPlayer = curPlayerB.idPlayer;
-                curPlayerB.remove();
-                var itA = db.playerByEmail.lowerBound("jordi@test.com");
-                prevPlayerA = itA.data();
-                nextPlayerA = itA.next();
-                assert.equal(prevPlayerB, prevPlayerA);
-                assert.equal(nextPlayerB, nextPlayerA);
-                throw new Error("Force Roll back");
-            }, function(err) {
-                assert(db.players[idPlayer], null);
-                var itT = db.playerByEmail.lowerBound("jordi@test.com");
-                prevPlayerT = itT.prev();
-                curPlayerT = itT.next();
-                nextPlayerT = itT.next();
-                assert.equal(prevPlayerB, prevPlayerT);
-                assert.equal(db.players[idPlayer], curPlayerT);
-                assert.equal(nextPlayerB, nextPlayerT);
-                done();
-            });
-        });
-    });
     describe('Syncronized',function() {
         it("prepare db for syncronization", function(done) {
             this.timeout(20000);
