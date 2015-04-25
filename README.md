@@ -13,7 +13,7 @@ So you can access all the data directly with javascript objects. It is very usef
 In the same way, you can also write to the database in a short transaction. You just edit the objects and the library will take care of writing every thing to the database in a transactional maner.
 
 
-# NSTALL
+# INSTALL
 
     npm install syncorm
 
