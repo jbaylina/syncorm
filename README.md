@@ -70,112 +70,127 @@ And for this example we will add some data to this database:
 
 The first thing that we need to do, is define the tables:
 
-    var db = require('syncorm').Database({
-    	driver: "mysql",
-    	host: '127.0.0.1',
-    	port: 8889,
-    	user: 'root',
-    	password: 'root',
-    	database: 'peopleheights'
-    	log: true,
+    /*jslint node: true */
+    "use strict";
+
+    var Database = require('syncorm').Database;
+    var _=require('underscore');
+
+    var db = new Database({
+        driver: "mysql",
+        host: '127.0.0.1',
+        port: 3306,
+        user: 'root',
+        password: '',
+        database: 'syncorm_tutorial',
+        log: true
+    });
+
+    db.personsByLastName = {};
+
+    db.define({
+        name: "Person",
+        table: "persons",
+        id: "idperson",
+        fields: {
+            idperson: {
+                type: "integer",
+                def: function () {
+                    return db.sequences.idperson.inc();
+                }
+            },
+            firstname: "string",
+            lastname: "string",
+            birthdate: "date"
+        },
+        calculatedFields: {
+            age: function() {
+                var today = new Date();
+                var birthDate = new Date(this.birthdate);
+                var age = today.getFullYear() - birthDate.getFullYear();
+                var m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
+                {
+                    age--;
+                }
+                return age;
+            }
+        },
+        triggers: [{
+            add: function(obj) {
+                db.personsByLastName[obj.lastname] = obj;
+            },
+            remove: function(obj) {
+                delete db.personsByLastName[obj.lastname];
+            }
+        }]
     });
 
     db.define({
-    	name: "Person",
-    	table: "persons",
-    	id: "idperson",
-    	fields: {
-    		idperson: {
-    			type: "integer",
-    			def: function () {
-    				return db.sequences.idperson.inc();
-    			}
-    		},
-    		firstname: "string",
-    		lastname: "string",
-    		birthdate: "date"
-    	},
-    	calculatedFields: {
-    		age: function() {
-    			var today = new Date();
-    			var birthDate = new Date(dateString);
-    			var age = today.getFullYear() - birthDate.getFullYear();
-    			var m = today.getMonth() - birthDate.getMonth();
-    			if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
-    			{
-    				age--;
-    			}
-    			return age;
-    		}
-    	},
-    	indexes: {
-    		lname2person: function(p) {
-    			return p.lname;
-    		}
-    	}
+        name: "Measure",
+        table: "measures",
+        id: "idmeasure",
+        fields: {
+            idmeasure: {
+                type: "integer",
+                def: function () {
+                    return db.sequences.idmeasure.inc();
+                }
+            },
+            idperson: "integer",
+            timestamp: "datetime",
+            height: "float",
+            parameters: "json"
+        },
+        relations: {
+            person: {
+                type: "Person",
+                link: ["idperson"],
+                reverse: "measures",
+                reverseVisibility: ["PUBLIC"]
+            }
+        }
     });
 
     db.define({
-    	name: "Measure",
-    	table: "measures",
-    	id: "idmeasure",
-    	fields: {
-    		idmeasure: {
-    			type: "integer",
-    			def: function () {
-    				return db.sequences.idmeasure.inc();
-    			}
-    		},
-    		idperson: "integer"
-    		timestamp: "datetime",
-    		height: "float",
-    		parameters: "json"
-    	}
-    	relations: {
-    		person: {
-    			type: "Person",
-    			link: ["idperson"],
-    			reverse: "measures"
-    		}
-    	}
+        name: "Sequence",
+        table: "sequences",
+        id: "name",
+        fields: {
+            name: "string",
+            last: "integer"
+        },
+        methods: {
+            inc: function () {
+                this.last += 1;
+                return this.last;
+            }
+        }
     });
 
-    db.define({
-    	name: "Sequence",
-    	table: "sequences",
-    	id: "name",
-    	fields: {
-    		name: "string",
-    		last: "integer"
-    	},
-    	methods: {
-    		inc: function () {
-    			this.last += 1;
-    			return this.last;
-    		}
-    	}
+
+    db.on("init", function() {
+        console.log("Database loaded");
     });
 
     db.loadAll();
 
-    db.on("init", function() {
-    	// The database is fully loaded in memory.
-    });
-
 ## Reading data.
 
 
-Let's start wit a simple example. Imagine that you just want to console out the full name for person with idperson=56.
+Let's start wit a simple example. Imagine that you just want to console out the full name for person with idperson=1.
 
-	console.log(db.persons[65].firstname + " " + db.persons[65].lastname);
+    console.log(db.persons[1].firstname + " " + db.persons[1].lastname + " - Age: " + db.persons[1].age);
 
-Imagine that you now want to print all the measures of the person with id person 56.
+Imagine that you now want to print all the measures of the person with id person 1.
 
-	var _ = require('undersocore');
+    _.each(db.persons[1].measures, function(measure) {
+        console.log(measure.timestamp.toUTCString() + "\t" + measure.height.toFixed(2));
+    });
 
-	_.each(db.persons[56].measures, function(measure) {
-		console.log(measure.timestamp.toUTCString() + "\t" + measure.height.toFixed(2));
-	});
+Converting to a regular javascript object
+
+    console.log(JSON.stringify(db.persons[1].toJSON()));
 
 
 ## Writing transactions.
@@ -183,24 +198,24 @@ Imagine that you now want to print all the measures of the person with id person
 Lets now see how we would add a person and the first measure to the database:
 
 
-	db.doTransaction(function() {
-		var person, measure;
-		person = new db.Person({
-			firstname: "John",
-			lastname: "Smith"
-		});
-		measure = new db.Measure({
-			idperson: person.idperson,
-			height: 1.80,
-			timestamp: new Date()
-		});
-	}, function(err) {
-		if (err) {
-			console.log("An error ocurred during the transaction: " + err.toString());
-		} else {
-			console.log("A new persona and measure are saved to the database");
-		}
-	});
+    db.doTransaction(function() {
+        var person, measure;
+        person = new db.Person({
+            firstname: "John",
+            lastname: "Smith"
+        });
+        measure = new db.Measure({
+            idperson: person.idperson,
+            height: 1.80,
+            timestamp: new Date()
+        });
+    }, function(err) {
+        if (err) {
+            console.log("An error ocurred during the transaction: " + err.toString());
+        } else {
+            console.log("A new persona and measure are saved to the database");
+        }
+    });
 
 
 We forgot to add the John's birthdate, so we can do another transaction to add it:
@@ -228,25 +243,29 @@ We forgot to add the John's birthdate, so we can do another transaction to add i
 
 Lets now delete all the Johns measures in the same transaction.
 
-	db.doTransaction(function() {
-		var person= _.findWhere(db.persons, {
-					firstname: "John",
-					lastname: "Smith"
-				});
+    db.doTransaction(function() {
+        var person= _.findWhere(db.persons, {
+                    firstname: "John",
+                    lastname: "Smith"
+                });
 
-		if (!person) {
-			throw new Error("John Smith not found");
-		}
+        if (!person) {
+            throw new Error("John Smith not found");
+        }
 
-		person.remove();
+        _.each(person.measures, function(measure) {
+            measure.remove();
+        });
 
-	}, function(err) {
-		if (err) {
-			console.log("An error ocurred during the transaction: " + err.toString());
-		} else {
-			console.log("A new persona and measure are saved to the database");
-		}
-	});
+        person.remove();
+
+    }, function(err) {
+        if (err) {
+            console.log("An error ocurred during the transaction: " + err.toString());
+        } else {
+            console.log("A new persona and measure where deleted to the database");
+        }
+    });
 
 
 ## Calculated fields
@@ -301,32 +320,14 @@ toJSON
 
     res.json(person.toJSON());
 
+Each field/calculatedFired/relation can define a parameter "visibility" with an array of selectors (Each selector is a simple string). 
 
-## Indexes
+The first paramter to toJSON function is a selector. Only fields with this selector visibility will be inserted in the function.
 
-You con use any data structore to manage  the data.
-
-    var IdxBtree  = require("syncorm-idxbtree");
-
-    db.define({
-        name: "User",
-        table: "users",
-        id: "idUser",
-        fields: {
-            idUser: "string",
-            password: "string",
-            email: "string"
-        },
-        indexes: {
-            userByEmail: new IdxBtree({key: "email"})
-        }
-    });
-
-    var user = db.usersByEmail.lowerBound("email@example.com").data();
-
-    if (user) {
-        consloe.log(JSON.stringify(user.toJSON()));
-    }
+The default selector if not specified is "PUBLIC".
+The default selector for fields and calculated fiels ar "PUBLIC".
+The default selector for relations is [].
+The relation has a paameter called "reverseVisibility" that specifies the selectors that expand the reverse objects. The default is []
 
 ## Triggers
 
@@ -384,6 +385,10 @@ With this mk you can also call all keys of an object
     mk.each(db.objects, 2, function(obj, k) {
 
     });
+
+## Refresh from database
+
+## Logging
 
 
 
