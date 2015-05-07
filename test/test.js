@@ -438,6 +438,20 @@ describe('Sync orm test', function() {
             });
         });
     });
+    describe('Rollbacks',function() {
+        it("should roll back value if exception", function(done) {
+            db.doTransaction(function() {
+                assert.equal(db.examples1[1].text, "a text");
+                db.examples1[1].text = "another Text";
+                assert.equal(db.examples1[1].text, "another Text");
+                throw new Error("Test Exception");
+            }, function(err) {
+                assert.equal(err.message, "Test Exception");
+                assert.equal(db.examples1[1].text, "a text");
+                done();
+            });
+        });
+    });
     describe('Relations',function() {
         it("should create a team with two players", function(done) {
             var team, player1, player2;
@@ -650,7 +664,7 @@ describe('Sync orm test', function() {
             });
         });
     });
-    describe('Memory leaks',function() {
+/*    describe('Memory leaks',function() {
         it("Should has no memry leaks", function(done) {
             this.timeout(200000);
             var nRegs = 10000;
@@ -693,7 +707,7 @@ describe('Sync orm test', function() {
 
         });
     });
-
+*/
 
 });
 
