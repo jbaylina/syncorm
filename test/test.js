@@ -93,6 +93,14 @@ function createTestDatabase(done) {
               'PRIMARY KEY (`idPlayer`) )', cb);
     }, function(cb) {
         connection.query(
+            'CREATE  TABLE `syncorm_test`.`players_2` (' +
+              '`id_team` INT NULL ,' +
+              '`id_player` INT NOT NULL,' +
+              '`name` VARCHAR(32) NULL ,' +
+              '`email` VARCHAR(64) NULL ,' +
+              'PRIMARY KEY (`id_team`, `id_player`) )', cb);
+    }, function(cb) {
+        connection.query(
             'CREATE  TABLE `syncorm_test`.`dbids` (' +
               '`id` VARCHAR(16) NOT NULL ,' +
               '`last` INT NOT NULL ,' +
@@ -205,6 +213,31 @@ function defineDatabase(db) {
         indexes: {
             playerByEmail: new IdxBtree({key: "email"})
         }
+    });
+    db.define({
+        name: "Player2",
+        table: "players2",
+        dbTableName: "players_2",
+        id: ["idTeam", "idPlayer"],
+        fields: {
+            idTeam: {
+                type: "integer",
+                dbFieldName: "id_team"
+            },
+            idPlayer: {
+                type: "integer",
+                dbFieldName: "id_player"
+            },
+            name: "string",
+            email: "string"
+        },
+        relations: {
+            team: {
+                type: "Team",
+                link: "idTeam",
+                reverse: "players2"
+            }
+        },
     });
     db.define({
         name: "Dbid",
@@ -661,6 +694,36 @@ describe('Sync orm test', function() {
                 assert.equal(db.multikeyObjects[1][id2][D].text, "Hello");
                 assert.deepEqual(mk.keys(db.multikeyObjects, 3), [[1,id2,D.toString()]]);
                 assertSQL("SELECT `text` from multikey_objects WHERE id1=1 and id2='a' and idDate='2015-04-24'", [{text: "Hello"}], done);
+            });
+        });
+        it("Should keep relations Ok", function(done) {
+            db.doTransaction(function() {
+                var player1 = new db.Player2({idTeam: 3, idPlayer: 1, name: "Player1"});
+                var player2 = new db.Player2({idTeam: 3, idPlayer: 2, name: "Player2"});
+                var player3 = new db.Player2({idTeam: 3, idPlayer: 3, name: "Player3"});
+                var newTeam = new db.Team({idTeam: 3, name: "Betis"});
+                assert.equal(player1.team, newTeam);
+                assert.equal(mk.size(newTeam.players2), 3);
+                assert.equal(newTeam.players2[3][2].name, "Player2");
+                assert.equal(newTeam.players2[3][2], player2);
+                player2.remove();
+                assert.equal(mk.size(newTeam.players2), 2);
+                assert.equal(newTeam.players2[3][2], null);
+                assert.equal(newTeam.players2[3][1], player1);
+                newTeam.remove();
+                assert.equal(player1.team, null);
+
+                newTeam = new db.Team({idTeam: 3, name: "Betis"});
+                assert.equal(player1.team, newTeam);
+                assert.equal(mk.size(newTeam.players2), 2);
+                assert.equal(newTeam.players2[3][1].name, "Player1");
+                assert.equal(newTeam.players2[3][1], player1);
+            }, function(err) {
+                assert.equal(db.players2[3][1].team, db.teams[3]);
+                assert.equal(mk.size(db.teams[3].players2), 2);
+                assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                assert.equal(db.teams[3].players2[3][3], db.players2[3][3]);
+                done();
             });
         });
     });
