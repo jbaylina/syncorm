@@ -726,6 +726,85 @@ describe('Sync orm test', function() {
                 done();
             });
         });
+        it("Should keep relations Ok", function(done) {
+            connection.query(
+                " UPDATE `syncorm_test`.`players_2` " +
+                "   SET id_player = 4" +
+                "  WHERE `id_player` = 3", function(err) {
+                assert.ifError(err);
+                db.refreshDatabase(function() {
+                    assert.equal(mk.size(db.teams[3].players2), 2);
+                    assert.equal(db.teams[3].players2[3][4].name, "Player3");
+                    done();
+                });
+            });
+        });
+        it("Should keep relations Ok", function(done) {
+            connection.query(
+                " DELETE FROM `syncorm_test`.`players_2` " +
+                "  WHERE `id_player` = 4", function(err) {
+                assert.ifError(err);
+                connection.query(
+                    " INSERT INTO `syncorm_test`.`players_2` " +
+                    " (id_team, id_player, name)" +
+                    " VALUES (3, 3, 'Player3')" , function(err) {
+                        assert.ifError(err);
+                        db.refreshDatabase(function() {
+                            assert.equal(mk.size(db.teams[3].players2), 2);
+                            assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                            done();
+                    });
+                });
+            });
+        });
+        it("Should keep relations Ok when deleted", function(done) {
+            connection.query(
+                " DELETE FROM `syncorm_test`.`teams` " +
+                "  WHERE `idTeam` = 3", function(err) {
+                assert.ifError(err);
+                connection.query(
+                    " INSERT INTO `syncorm_test`.`teams` " +
+                    " (idTeam, name)" +
+                    " VALUES (3, 'Betis')" , function(err) {
+                    assert.ifError(err);
+                    db.refreshDatabase(function() {
+                        assert.equal(mk.size(db.teams[3].players2), 2);
+                        assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                        done();
+                    });
+                });
+            });
+        });
+        it("Should keep relations Ok when deleted", function(done) {
+            connection.query(
+                " DELETE FROM `syncorm_test`.`teams` " +
+                "  WHERE `idTeam` = 3", function(err) {
+                assert.ifError(err);
+                db.refreshDatabase(function() {
+                    assert.equal(db.players2[3][1].team , null);
+                    done();
+                });
+            });
+        });
+        it("Should keep relations Ok after restoring a master 2", function(done) {
+            connection.query(
+                " INSERT INTO `syncorm_test`.`teams` " +
+                " (idTeam, name)" +
+                " VALUES (3, 'Betis')" , function(err) {
+                assert.ifError(err);
+                db.refreshDatabase(function() {
+                    assert.equal(mk.size(db.teams[3].players2), 2);
+                    assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                    done();
+                });
+            });
+        });
+        it("Should keep relations Ok after restoring a master 2", function(done) {
+            mk.each({}, function() {
+                assert.equal(1,0);
+            });
+            done();
+        });
     });
 /*    describe('Memory leaks',function() {
         it("Should has no memry leaks", function(done) {
