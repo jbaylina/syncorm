@@ -8,7 +8,6 @@ var async = require("async");
 var mysql = require('mysql');
 var _ = require('underscore');
 var prepareDB = require("../scripts/prepare_db_lib.js");
-var IdxBtree  = require("syncorm-idxbtree");
 var heapdump = require("heapdump");
 
 var mk = syncorm.mk;
@@ -210,10 +209,16 @@ function defineDatabase(db) {
                 reverse: "players"
             }
         },
-        indexes: {
-            playerByEmail: new IdxBtree({key: "email"})
+        triggers: {
+            "remove": function(obj) {
+                delete db.playerByEmail[obj.email];
+            },
+            "add": function(obj) {
+                db.playerByEmail[obj.email] = obj;
+            }
         }
     });
+    db.playerByEmail = {};
     db.define({
         name: "Player2",
         table: "players2",
