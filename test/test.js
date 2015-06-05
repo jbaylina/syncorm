@@ -804,10 +804,15 @@ describe('Sync orm test', function() {
                 });
             });
         });
-        it("Should keep relations Ok after restoring a master 2", function(done) {
+        it("Should not call each function on an empty set", function(done) {
             mk.each({}, function() {
                 assert.equal(1,0);
             });
+            done();
+        });
+        it("Should findWhere player 3", function(done) {
+            var player = mk.findWhere(db.players2, {name: "Player3"});
+            assert.equal(player, db.players2[3][3]);
             done();
         });
     });
