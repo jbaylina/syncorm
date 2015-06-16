@@ -47,7 +47,7 @@ var connection;
 function createTestDatabase(done) {
     console.log("Start creating a test database");
     /* jshint ignore:start */
-    this.timeout(10000);
+    this.timeout(20000);
     /* jshint ignore:end */
     connection = mysql.createConnection({
         host: "127.0.0.1",
