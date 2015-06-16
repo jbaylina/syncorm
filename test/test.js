@@ -816,6 +816,24 @@ describe('Sync orm test', function() {
             done();
         });
     });
+    describe('Parallel insert',function() {
+        it("Should insert 1000 players in parallel", function(done) {
+            this.timeout(20000);
+            async.each(_.range(5,1000), function(i, cb) {
+                console.log("Indert: "+ i);
+                db.doTransaction(function() {
+                    console.log("In transaction: "+ i);
+                    var p = new db.Player({
+                        name: "Player" + i,
+                        idTeam: 3
+                    });
+                }, cb);
+            }, function(err) {
+                assert.ifError(err);
+                done();
+            });
+        });
+    });
 /*    describe('Memory leaks',function() {
         it("Should has no memry leaks", function(done) {
             this.timeout(200000);
