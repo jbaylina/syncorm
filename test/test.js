@@ -599,6 +599,7 @@ describe('Sync orm test', function() {
             });
         });
         it("Detect a new insert", function(done) {
+            this.timeout(10000);
             connection.query(
                 " INSERT INTO `syncorm_test`.`teams` " +
                 "        (`idTeam`,`name`)" +
