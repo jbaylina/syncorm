@@ -613,12 +613,15 @@ describe('Sync orm test', function() {
             });
         });
         it("Detect an update (inside transaction)", function(done) {
+            console.log("before update");
             connection.query(
                 " UPDATE `syncorm_test`.`teams` " +
                 "   SET name = 'Real Madrid'" +
                 "  WHERE `idTeam` = 2", function(err) {
+                console.log("after update");
                 assert.ifError(err);
                 db.doTransaction(function() {
+                    console.log("in transaction");
                     assert.equal(db.teams[2].name, "Real Madrid");
                 }, function(err) {
                     assert.ifError(err);
