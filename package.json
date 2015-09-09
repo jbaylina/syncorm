@@ -5,7 +5,7 @@
   },
   "name": "syncorm",
   "description": "Syncronous ORM",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "repository": {
     "type": "git",
     "url": "https://github.com/jbaylina/syncorm.git"
