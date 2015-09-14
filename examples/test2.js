@@ -1,5 +1,5 @@
 var db = require('./peopleheights').db,
-	U = require('underscore');
+	U = require('lodash');
 
 db.on('init', function() {
 	return db.startTransaction()

@@ -8,7 +8,7 @@ Every record in the database is mapped to a javascript object. And you have a di
 
 The objects can be linked in a one to many relation.
 
-So you can access all the data directly with javascript objects. It is very useful to use Underscore or Async libraries to traverse the tables and the linked records.
+So you can access all the data directly with javascript objects. It is very useful to use Underscore/lodash or Async libraries to traverse the tables and the linked records.
 
 In the same way, you can also write to the database in a short transaction. You just edit the objects and the library will take care of writing every thing to the database in a transactional maner.
 
@@ -74,7 +74,7 @@ The first thing that we need to do, is define the tables:
     "use strict";
 
     var Database = require('syncorm').Database;
-    var _=require('underscore');
+    var _=require('lodash');
 
     var db = new Database({
         driver: "mysql",
@@ -320,7 +320,7 @@ toJSON
 
     res.json(person.toJSON());
 
-Each field/calculatedFired/relation can define a parameter "visibility" with an array of selectors (Each selector is a simple string). 
+Each field/calculatedFired/relation can define a parameter "visibility" with an array of selectors (Each selector is a simple string).
 
 The first paramter to toJSON function is a selector. Only fields with this selector visibility will be inserted in the function.
 

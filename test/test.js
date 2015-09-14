@@ -6,7 +6,7 @@ var assert = require("assert"); // node.js core module
 var syncorm = require("../lib/syncorm.js");
 var async = require("async");
 var mysql = require('mysql');
-var _ = require('underscore');
+var _ = require('lodash');
 var prepareDB = require("../scripts/prepare_db_lib.js");
 var heapdump = require("heapdump");
 

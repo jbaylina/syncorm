@@ -1,5 +1,5 @@
 var db = require('./peopleheights').db,
-	U = require('underscore');
+	U = require('lodash');
 
 var idperson = 1;
 
