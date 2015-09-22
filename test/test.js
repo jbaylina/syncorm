@@ -143,6 +143,15 @@ function createTestDatabase(done) {
                          '  PRIMARY KEY (`id`)' +
                          ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
 
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`rarekeys` (' +
+                         ' `date1` date NOT NULL,' +
+                         ' `datetime2` datetime  NOT NULL,' +
+                         ' `float3` double  NOT NULL,' +
+                         ' `nokey` varchar(45)  NULL,' +
+                         '  PRIMARY KEY (`date1`, `datetime2`, `float3`)' +
+                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+
     }], done);
 }
 
@@ -324,6 +333,19 @@ function defineDatabase(db) {
             id2: "string",
             idDate: "date",
             text: "string"
+        }
+    });
+
+    db.define({
+        name: "RareKey",
+        table: "rareKeys",
+        dbTableName: "rarekeys",
+        id: ["date1","datetime2","float3"],
+        fields: {
+            date1: "date",
+            datetime2: "datetime",
+            float3: "float",
+            nokey: "string"
         }
     });
 
@@ -835,6 +857,87 @@ describe('Sync orm test', function() {
             }, function(err) {
                 assert.ifError(err);
                 done();
+            });
+        });
+    });
+    describe('Rarekeys', function() {
+
+        it('Should Insert a record with a rarekey', function(done) {
+            var d = new Date('2015-01-02 UTC');
+            var dt = new Date('2016-03-04 21:33:32 UTC');
+            db.doTransaction(function() {
+                var r = new db.RareKey({
+                    date1: d,
+                    datetime2: dt,
+                    float3: 1.25,
+                    nokey: "avalue"
+                });
+                var r2 = mk.get(db.rareKeys, [d,dt,1.25]);
+                assert.equal(r2,r);
+            },function(err) {
+                assert.ifError(err);
+                var r3 = mk.get(db.rareKeys, [d,dt,1.25]);
+                assert.equal(r3.nokey, 'avalue');
+
+                assertSQL("SELECT `nokey` from rarekeys WHERE date1='2015-01-02' and datetime2='2016-03-04 21:33:32' and float3=1.25", [{nokey: "avalue"}], done);
+            });
+        });
+        it('Should Rollback ok after inserting a rarekey', function(done) {
+            var d = new Date('2015-05-06 UTC');
+            var dt = new Date('2016-07-08 22:33:44 UTC');
+            db.doTransaction(function() {
+                var r = new db.RareKey({
+                    date1: d,
+                    datetime2: dt,
+                    float3: 35.3343,
+                    nokey: "another value"
+                });
+                throw new Error("TestException");
+
+            },function(err) {
+                 assert.equal(err.message, "TestException");
+                 done();
+            });
+        });
+        it('Should Rollback ok after deleting a rarekey', function(done) {
+            var d = new Date('2015-01-02 UTC');
+            var dt = new Date('2016-03-04 21:33:32 UTC');
+            db.doTransaction(function() {
+                var r = mk.get(db.rareKeys, [d,dt,1.25]);
+                r.remove();
+
+                throw new Error("TestException");
+
+            },function(err) {
+                 assert.equal(err.message, "TestException");
+                 done();
+            });
+        });
+
+        it('Should Delete a record with a rarekey', function(done) {
+            var d = new Date('2015-01-02 UTC');
+            var dt = new Date('2016-03-04 21:33:32 UTC');
+            db.doTransaction(function() {
+                var r = mk.get(db.rareKeys, [d,dt,1.25]);
+                r.remove();
+            },function(err) {
+                assert.ifError(err);
+                assertSQL("SELECT `nokey` from rarekeys WHERE date1='2015-01-02' and datetime2='2016-03-04 21:33:32' and float3=1.25", [], done);
+            });
+        });
+
+        it('Should get synchronized when updated externally', function(done) {
+            connection.query(
+                " INSERT INTO `rarekeys` " +
+                "        (`date1`,`datetime2`,`float3`,`nokey` )" +
+                " VALUES ('2016-07-31','2016-08-31 09:21', 4.37,'TEST')", function(err) {
+                assert.ifError(err);
+                db.refreshDatabase(function(err) {
+                    assert.ifError(err);
+                    var r = mk.get(db.rareKeys, [new Date('2016-07-31 UTC'),new Date('2016-08-31 09:21 UTC'),4.37]);
+                    assert.equal(r.nokey, "TEST");
+                    done();
+                });
             });
         });
     });
