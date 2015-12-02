@@ -22,18 +22,23 @@ async.series([function(cb) {
 
 
 	var arr;
-	arr = /(.*)@([^:\/]*)(:(.*))?\/(.*)/.exec(program.db);
+	arr = /([^:@]*)(:([^@]+))?@([^:\/]*)(:(.*))?\/(.*)/.exec(program.db);
 
 	if (!arr)  {
 		return cb( new Error("Error parsing Database"));
 	}
 
 	self.db = {
-		host: arr[2],
-		port: arr[4] ? arr[4]: 3306,
+		host: arr[4],
+		port: arr[6] ? arr[6]: 3306,
 		user: arr[1],
-		database: arr[5]
+		database: arr[7],
+		password: arr[2] ? arr[3] : null
 	};
+
+	if (self.db.password !== null) {
+		return cb();
+	}
 
 	prompt.message = "";
 	prompt.delimiter = "";
