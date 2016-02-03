@@ -152,6 +152,13 @@ function createTestDatabase(done) {
                          '  PRIMARY KEY (`date1`, `datetime2`, `float3`)' +
                          ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
 
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`relationkeys` (' +
+                        ' `id` int(11) NOT NULL,' +
+                        ' `id_rel` int(11)  NOT NULL,' +
+                        ' `nokey` varchar(45)  NULL,' +
+                        '  PRIMARY KEY (`id`)' +
+                        ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
     }], done);
 }
 
@@ -348,6 +355,24 @@ function defineDatabase(db) {
             nokey: "string"
         }
     });
+    db.define({
+        name: "RelationKey",
+        table: "relationkeys",
+        dbTableName: "relationkeys",
+        id: "id",
+        fields: {
+            id: "integer",
+            id_rel: "integer",
+            nokey: "string"
+        },
+        relations: {
+            relation: {
+                type: "RelationKey",
+                link: "id_rel",
+                reverse: "related"
+            }
+        }
+    });
 
     db.newId = function(dbid) {
         if (this.dbids[dbid]) {
@@ -408,6 +433,7 @@ describe('Sync orm test', function() {
             assert.equal(db.examples1[1].boolean, true);
         });
     });
+    /* ES EL COMENT MEU
     describe('Testing write values',function() {
         it("update integer", function(done) {
             db.doTransaction(function() {
@@ -860,6 +886,8 @@ describe('Sync orm test', function() {
             });
         });
     });
+
+
     describe('Rarekeys', function() {
 
         it('Should Insert a record with a rarekey', function(done) {
@@ -941,6 +969,47 @@ describe('Sync orm test', function() {
             });
         });
     });
+    ES EL COMENT MEU */
+    describe('Relationkeys', function() {
+        it('Should Insert a record with a relationkeys', function(done) {
+            db.doTransaction(function() {
+                // insereixo un id de relacions
+                var r1 = new db.RelationKey({
+                    id: 1,
+                    id_rel: 1,
+                    nokey: "Father"
+                });
+                var r2 = new db.RelationKey({
+                    id: 2,
+                    id_rel: 1,
+                    nokey: "Son"
+                });
+
+                var r11 = mk.get(db.relationkeys, 1);
+                var r22 = mk.get(db.relationkeys, 2);
+                assert.equal(r1,r11);
+                assert.equal(r2,r22);
+
+            },function(err) {
+                assert.ifError(err);
+                done();
+            });
+        });
+        it('Should update a record with a relative keys, and keep same relations', function(done) {
+            var r = mk.get(db.relationkeys, 1);
+            db.doTransaction(function() {
+                r.nokey = 'Father '+Math.floor((Math.random() * 10) + 1);
+                // aqui perd la relació
+                r.update();
+            },function(err) {
+                assert.ifError(err);
+                var r2 = mk.get(db.relationkeys, 2);
+                assert.equal(r.nokey, r2.relation.nokey);
+                done();
+            });
+        });
+    });
+
 /*    describe('Memory leaks',function() {
         it("Should has no memry leaks", function(done) {
             this.timeout(200000);
