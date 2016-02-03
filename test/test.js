@@ -433,7 +433,6 @@ describe('Sync orm test', function() {
             assert.equal(db.examples1[1].boolean, true);
         });
     });
-    /* ES EL COMENT MEU
     describe('Testing write values',function() {
         it("update integer", function(done) {
             db.doTransaction(function() {
@@ -969,7 +968,6 @@ describe('Sync orm test', function() {
             });
         });
     });
-    ES EL COMENT MEU */
     describe('Relationkeys', function() {
         it('Should Insert a record with a relationkeys', function(done) {
             db.doTransaction(function() {
@@ -1000,7 +998,7 @@ describe('Sync orm test', function() {
             db.doTransaction(function() {
                 // aqui perd la relació
                 r.nokey = 'Father '+Math.floor((Math.random() * 10) + 1);
-                r.update();
+                r.update({});
             },function(err) {
                 assert.ifError(err);
                 var r2 = mk.get(db.relationkeys, 2);
