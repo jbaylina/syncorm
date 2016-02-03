@@ -998,8 +998,8 @@ describe('Sync orm test', function() {
         it('Should update a record with a relative keys, and keep same relations', function(done) {
             var r = mk.get(db.relationkeys, 1);
             db.doTransaction(function() {
-                r.nokey = 'Father '+Math.floor((Math.random() * 10) + 1);
                 // aqui perd la relació
+                r.nokey = 'Father '+Math.floor((Math.random() * 10) + 1);
                 r.update();
             },function(err) {
                 assert.ifError(err);
