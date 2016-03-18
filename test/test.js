@@ -93,7 +93,7 @@ function createTestDatabase(done) {
     }, function(cb) {
         connection.query(
             'CREATE  TABLE `syncorm_test`.`players_2` (' +
-              '`id_team` INT NULL ,' +
+              '`id_team` INT NOT NULL ,' +
               '`id_player` INT NOT NULL,' +
               '`name` VARCHAR(32) NULL ,' +
               '`email` VARCHAR(64) NULL ,' +
