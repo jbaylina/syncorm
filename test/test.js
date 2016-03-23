@@ -625,6 +625,30 @@ describe('Sync orm test', function() {
                 done();
             });
         });
+        it("shold delete all references when roll back", function(done) {
+            this.timeout(2000000);
+            db.doTransaction(function() {
+                var team = new db.Team({idTeam: 2, name: "team2"});
+                var player1 = new db.Player({idTeam: team.idTeam, name: "J1"});
+                var player2 = new db.Player({idTeam: team.idTeam, name: "J2"});
+                throw new Error("Forced rollback");
+            }, function(err) {
+                var idPlayer3;
+                db.doTransaction(function() {
+                    var team2bis = new db.Team({idTeam: 2, name: "team2bis"});
+                    assert.equal( _.size(team2bis.players), 0);
+                    var player3 = new db.Player({idTeam: team2bis.idTeam, name: "J3"});
+                    idPlayer3 = player3.idPlayer;
+                    assert.equal( _.size(team2bis.players), 1);
+                    assert.equal( team2bis.players[idPlayer3].name, "J3");
+                }, function(err) {
+                    assert.ifError(err);
+                    assert.equal( _.size( db.teams[2].players), 1);
+                    assert.equal( db.teams[2].players[idPlayer3].name, "J3");
+                    done();
+                });
+            });
+        });
     });
     describe('Syncronized',function() {
         it("prepare db for syncronization", function(done) {
@@ -650,11 +674,11 @@ describe('Sync orm test', function() {
             connection.query(
                 " INSERT INTO `syncorm_test`.`teams` " +
                 "        (`idTeam`,`name`)" +
-                " VALUES ('2'     ,'R. Madrid')", function(err) {
+                " VALUES ('3'     ,'R. Madrid')", function(err) {
                 assert.ifError(err);
                 db.refreshDatabase(function(err) {
                     assert.ifError(err);
-                    assert.equal(db.teams[2].name, "R. Madrid");
+                    assert.equal(db.teams[3].name, "R. Madrid");
                     done();
                 });
             });
@@ -664,12 +688,12 @@ describe('Sync orm test', function() {
             connection.query(
                 " UPDATE `syncorm_test`.`teams` " +
                 "   SET name = 'Real Madrid'" +
-                "  WHERE `idTeam` = 2", function(err) {
+                "  WHERE `idTeam` = 3", function(err) {
                 console.log("after update");
                 assert.ifError(err);
                 db.doTransaction(function() {
                     console.log("in transaction");
-                    assert.equal(db.teams[2].name, "Real Madrid");
+                    assert.equal(db.teams[3].name, "Real Madrid");
                 }, function(err) {
                     assert.ifError(err);
                     done();
@@ -752,50 +776,50 @@ describe('Sync orm test', function() {
                 assertSQL("SELECT `text` from multikey_objects WHERE id1=1 and id2='a' and idDate='2015-04-24'", [{text: "Hello"}], done);
             });
         });
-        it("Should keep relations Ok", function(done) {
+        it("Should keep relations Ok 1", function(done) {
             db.doTransaction(function() {
-                var player1 = new db.Player2({idTeam: 3, idPlayer: 1, name: "Player1"});
-                var player2 = new db.Player2({idTeam: 3, idPlayer: 2, name: "Player2"});
-                var player3 = new db.Player2({idTeam: 3, idPlayer: 3, name: "Player3"});
-                var newTeam = new db.Team({idTeam: 3, name: "Betis"});
+                var player1 = new db.Player2({idTeam: 4, idPlayer: 1, name: "Player1"});
+                var player2 = new db.Player2({idTeam: 4, idPlayer: 2, name: "Player2"});
+                var player3 = new db.Player2({idTeam: 4, idPlayer: 3, name: "Player3"});
+                var newTeam = new db.Team({idTeam: 4, name: "Betis"});
                 assert.equal(player1.team, newTeam);
                 assert.equal(mk.size(newTeam.players2), 3);
-                assert.equal(newTeam.players2[3][2].name, "Player2");
-                assert.equal(newTeam.players2[3][2], player2);
+                assert.equal(newTeam.players2[4][2].name, "Player2");
+                assert.equal(newTeam.players2[4][2], player2);
                 player2.remove();
                 assert.equal(mk.size(newTeam.players2), 2);
-                assert.equal(newTeam.players2[3][2], null);
-                assert.equal(newTeam.players2[3][1], player1);
+                assert.equal(newTeam.players2[4][2], null);
+                assert.equal(newTeam.players2[4][1], player1);
                 newTeam.remove();
                 assert.equal(player1.team, null);
 
-                newTeam = new db.Team({idTeam: 3, name: "Betis"});
+                newTeam = new db.Team({idTeam: 4, name: "Betis"});
                 assert.equal(player1.team, newTeam);
                 assert.equal(mk.size(newTeam.players2), 2);
-                assert.equal(newTeam.players2[3][1].name, "Player1");
-                assert.equal(newTeam.players2[3][1], player1);
+                assert.equal(newTeam.players2[4][1].name, "Player1");
+                assert.equal(newTeam.players2[4][1], player1);
             }, function(err) {
-                assert.equal(db.players2[3][1].team, db.teams[3]);
-                assert.equal(mk.size(db.teams[3].players2), 2);
-                assert.equal(db.teams[3].players2[3][3].name, "Player3");
-                assert.equal(db.teams[3].players2[3][3], db.players2[3][3]);
+                assert.equal(db.players2[4][1].team, db.teams[4]);
+                assert.equal(mk.size(db.teams[4].players2), 2);
+                assert.equal(db.teams[4].players2[4][3].name, "Player3");
+                assert.equal(db.teams[4].players2[4][3], db.players2[4][3]);
                 done();
             });
         });
-        it("Should keep relations Ok", function(done) {
+        it("Should keep relations Ok 2", function(done) {
             connection.query(
                 " UPDATE `syncorm_test`.`players_2` " +
                 "   SET id_player = 4" +
                 "  WHERE `id_player` = 3", function(err) {
                 assert.ifError(err);
                 db.refreshDatabase(function() {
-                    assert.equal(mk.size(db.teams[3].players2), 2);
-                    assert.equal(db.teams[3].players2[3][4].name, "Player3");
+                    assert.equal(mk.size(db.teams[4].players2), 2);
+                    assert.equal(db.teams[4].players2[4][4].name, "Player3");
                     done();
                 });
             });
         });
-        it("Should keep relations Ok", function(done) {
+        it("Should keep relations Ok 3", function(done) {
             connection.query(
                 " DELETE FROM `syncorm_test`.`players_2` " +
                 "  WHERE `id_player` = 4", function(err) {
@@ -803,41 +827,41 @@ describe('Sync orm test', function() {
                 connection.query(
                     " INSERT INTO `syncorm_test`.`players_2` " +
                     " (id_team, id_player, name)" +
-                    " VALUES (3, 3, 'Player3')" , function(err) {
+                    " VALUES (4, 3, 'Player3')" , function(err) {
                         assert.ifError(err);
                         db.refreshDatabase(function() {
-                            assert.equal(mk.size(db.teams[3].players2), 2);
-                            assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                            assert.equal(mk.size(db.teams[4].players2), 2);
+                            assert.equal(db.teams[4].players2[4][3].name, "Player3");
                             done();
                     });
                 });
             });
         });
-        it("Should keep relations Ok when deleted", function(done) {
+        it("Should keep relations Ok when deleted 4", function(done) {
             connection.query(
                 " DELETE FROM `syncorm_test`.`teams` " +
-                "  WHERE `idTeam` = 3", function(err) {
+                "  WHERE `idTeam` = 4", function(err) {
                 assert.ifError(err);
                 connection.query(
                     " INSERT INTO `syncorm_test`.`teams` " +
                     " (idTeam, name)" +
-                    " VALUES (3, 'Betis')" , function(err) {
+                    " VALUES (4, 'Betis')" , function(err) {
                     assert.ifError(err);
                     db.refreshDatabase(function() {
-                        assert.equal(mk.size(db.teams[3].players2), 2);
-                        assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                        assert.equal(mk.size(db.teams[4].players2), 2);
+                        assert.equal(db.teams[4].players2[4][3].name, "Player3");
                         done();
                     });
                 });
             });
         });
-        it("Should keep relations Ok when deleted", function(done) {
+        it("Should keep relations Ok when deleted 5", function(done) {
             connection.query(
                 " DELETE FROM `syncorm_test`.`teams` " +
-                "  WHERE `idTeam` = 3", function(err) {
+                "  WHERE `idTeam` = 4", function(err) {
                 assert.ifError(err);
                 db.refreshDatabase(function() {
-                    assert.equal(db.players2[3][1].team , null);
+                    assert.equal(db.players2[4][1].team , null);
                     done();
                 });
             });
@@ -846,11 +870,11 @@ describe('Sync orm test', function() {
             connection.query(
                 " INSERT INTO `syncorm_test`.`teams` " +
                 " (idTeam, name)" +
-                " VALUES (3, 'Betis')" , function(err) {
+                " VALUES (4, 'Betis')" , function(err) {
                 assert.ifError(err);
                 db.refreshDatabase(function() {
-                    assert.equal(mk.size(db.teams[3].players2), 2);
-                    assert.equal(db.teams[3].players2[3][3].name, "Player3");
+                    assert.equal(mk.size(db.teams[4].players2), 2);
+                    assert.equal(db.teams[4].players2[4][3].name, "Player3");
                     done();
                 });
             });
@@ -863,7 +887,7 @@ describe('Sync orm test', function() {
         });
         it("Should findWhere player 3", function(done) {
             var player = mk.findWhere(db.players2, {name: "Player3"});
-            assert.equal(player, db.players2[3][3]);
+            assert.equal(player, db.players2[4][3]);
             done();
         });
     });
@@ -876,7 +900,7 @@ describe('Sync orm test', function() {
                     console.log("In transaction: "+ i);
                     var p = new db.Player({
                         name: "Player" + i,
-                        idTeam: 3
+                        idTeam: 4
                     });
                 }, cb);
             }, function(err) {
