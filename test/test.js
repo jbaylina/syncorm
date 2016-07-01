@@ -159,6 +159,18 @@ function createTestDatabase(done) {
                         ' `nokey` varchar(45)  NULL,' +
                         '  PRIMARY KEY (`id`)' +
                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+    }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`testConditions` (' +
+                        ' `id` int(11) NOT NULL,' +
+                        ' `name` varchar(45)  NULL,' +
+                        '  PRIMARY KEY (`id`)' +
+                        ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+   }, function(cb) {
+        connection.query(
+            " INSERT INTO `syncorm_test`.`testConditions` " +
+            "        (`id`,`name`)" +
+            " VALUES ('1'    ,'client1')" +
+            "       ,('1001' ,'client1001')", cb);
     }], done);
 }
 
@@ -383,6 +395,17 @@ function defineDatabase(db) {
             return 1;
         }
     };
+
+    db.define({
+        name: "testCondition",
+        table: "testConditions",
+        id: "id",
+        fields: {
+            id: "integer",
+            name: "string"
+        },
+        condition: "id>1000"
+    });
 }
 
 describe('Sync orm test', function() {
@@ -890,6 +913,23 @@ describe('Sync orm test', function() {
             assert.equal(player, db.players2[4][3]);
             done();
         });
+    });
+    describe('Condtions insert',function() {
+        it("Should only be one record", function(done) {
+            assert.equal(_.size(db.testConditions),1);
+            done();
+        });
+        it("Should be loaded if updated from the outside", function(done) {
+            this.timeout(200000000);
+            connection.query(
+                "UPDATE testConditions SET name='name2' WHERE id=1 ", function(err) {
+                    db.refreshDatabase(function() {
+                        assert.equal(_.size(db.testConditions),2);
+                        done();
+                    });
+                });
+        });
+
     });
     describe('Parallel insert',function() {
         it("Should insert 1000 players in parallel", function(done) {
