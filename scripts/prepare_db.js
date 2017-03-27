@@ -28,6 +28,10 @@ async.series([function(cb) {
 		return cb( new Error("Error parsing Database"));
 	}
 
+    if(program.excluded && typeof (program.excluded) !== "string") {
+        return cb(new Error("Parameter of excluded tables needs them separated by commas."));
+    }
+
 	self.db = {
 		host: arr[4],
 		port: arr[6] ? arr[6]: 3306,
@@ -61,7 +65,7 @@ async.series([function(cb) {
 	db= mysql.createConnection(self.db);
 	db.connect(cb);
 },function(cb) {
-	prepareDB(db,cb);
+	prepareDB(db,cb, program.excluded);
 }],function(err) {
 	if (err) {
 		console.log("Error: "+err);
