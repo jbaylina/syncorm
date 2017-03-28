@@ -5,10 +5,10 @@ var mysql = require('mysql'),
 	async = require('async');
 
 function prepareTable(db, t, cb, excluded) {
-    console.log(t + ":Preparing " + (excluded ? ' - excluded!': ''));
+	console.log(t + ":Preparing " + (excluded ? ' - excluded!': ''));
 	var index_fields;
 	async.series([function(cb2) {
-        if(excluded) return cb2();
+		if(excluded) return cb2();
 		var q = "SHOW KEYS FROM `" + t + "` WHERE Key_name='PRIMARY' ";
 		db.query(q, function(err, rows) {
 			if (err) {
@@ -30,7 +30,7 @@ function prepareTable(db, t, cb, excluded) {
 		var q = "DROP TRIGGER IF EXISTS " + t+"_ai_dbops";
 		db.query(q, cb2);
 	},function(cb2) {
-        if(excluded) return cb2();
+		if(excluded) return cb2();
 		var q = "CREATE TRIGGER "+ t+"_ai_dbops AFTER INSERT ON "+ t + "\n"+
 				" FOR EACH ROW \n"+
 				" BEGIN \n"+
@@ -53,7 +53,7 @@ function prepareTable(db, t, cb, excluded) {
 		var q = "DROP TRIGGER IF EXISTS " + t+"_au_dbops";
 		db.query(q, cb2);
 	},function(cb2) {
-        if(excluded) return cb2();
+		if(excluded) return cb2();
 		var S;
 		var q = "CREATE TRIGGER "+ t+"_au_dbops AFTER UPDATE ON "+ t + "\n"+
 				" FOR EACH ROW \n"+
@@ -102,7 +102,7 @@ function prepareTable(db, t, cb, excluded) {
 		var q = "DROP TRIGGER IF EXISTS " + t+"_ad_dbops";
 		db.query(q, cb2);
 	},function(cb2) {
-        if(excluded) return cb2();
+		if(excluded) return cb2();
 		var q = "CREATE TRIGGER "+ t+"_ad_dbops AFTER DELETE ON "+ t + "\n"+
 				" FOR EACH ROW \n"+
 				" BEGIN \n"+
@@ -128,7 +128,7 @@ function prepareTable(db, t, cb, excluded) {
 
 
 function prepareDB(db, cb, excluded) {
-    var excluded = excluded ? excluded.split(',') : [];
+	var excluded = excluded ? excluded.split(',') : [];
 	async.series([function(cb2) {
 		var q = "DROP TABLE IF EXISTS `dbops`;";
 		db.query(q, cb2);

@@ -14,7 +14,7 @@ async.series([function(cb) {
 	program
 		.version('0.0.1')
 		.option('-d, --db [db]', "Database to prepare (user@hostname/schema)" )
-        .option('-e, --excluded [tables]', "Excluded tables (separated by commas)")
+		.option('-e, --excluded [tables]', "Excluded tables (separated by commas)")
 		.parse(process.argv);
 
 	if (!program.db) {
@@ -29,9 +29,9 @@ async.series([function(cb) {
 		return cb( new Error("Error parsing Database"));
 	}
 
-    if(program.excluded && typeof (program.excluded) !== "string") {
-        return cb(new Error("Parameter of excluded tables needs them separated by commas."));
-    }
+	if(program.excluded && typeof (program.excluded) !== "string") {
+		return cb(new Error("Parameter of excluded tables needs them separated by commas."));
+	}
 
 	self.db = {
 		host: arr[4],

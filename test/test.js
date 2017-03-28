@@ -161,11 +161,11 @@ function createTestDatabase(done) {
                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
     }, function(cb) {
         connection.query('CREATE TABLE `syncorm_test`.`testconditions` (' +
-            ' `id` int(11) NOT NULL,' +
-            ' `name` varchar(45)  NULL,' +
-            '  PRIMARY KEY (`id`)' +
-            ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
-    }, function(cb) {
+                        ' `id` int(11) NOT NULL,' +
+                        ' `name` varchar(45)  NULL,' +
+                        '  PRIMARY KEY (`id`)' +
+                        ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+   }, function(cb) {
         connection.query(
             " INSERT INTO `syncorm_test`.`testconditions` " +
             "        (`id`,`name`)" +
@@ -936,9 +936,7 @@ describe('Sync orm test', function() {
         it("Should insert 1000 players in parallel", function(done) {
             this.timeout(20000);
             async.each(_.range(5,1000), function(i, cb) {
-                // console.log("Indert: "+ i);
                 db.doTransaction(function() {
-                    // console.log("In transaction: "+ i);
                     var p = new db.Player({
                         name: "Player" + i,
                         idTeam: 4
