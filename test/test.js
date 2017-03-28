@@ -160,14 +160,14 @@ function createTestDatabase(done) {
                         '  PRIMARY KEY (`id`)' +
                         ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
     }, function(cb) {
-        connection.query('CREATE TABLE `syncorm_test`.`testConditions` (' +
-                        ' `id` int(11) NOT NULL,' +
-                        ' `name` varchar(45)  NULL,' +
-                        '  PRIMARY KEY (`id`)' +
-                        ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
-   }, function(cb) {
+        connection.query('CREATE TABLE `syncorm_test`.`testconditions` (' +
+            ' `id` int(11) NOT NULL,' +
+            ' `name` varchar(45)  NULL,' +
+            '  PRIMARY KEY (`id`)' +
+            ' ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',cb);
+    }, function(cb) {
         connection.query(
-            " INSERT INTO `syncorm_test`.`testConditions` " +
+            " INSERT INTO `syncorm_test`.`testconditions` " +
             "        (`id`,`name`)" +
             " VALUES ('1'    ,'client1')" +
             "       ,('1001' ,'client1001')", cb);
@@ -399,6 +399,7 @@ function defineDatabase(db) {
     db.define({
         name: "testCondition",
         table: "testConditions",
+        dbTableName: "testconditions",
         id: "id",
         fields: {
             id: "integer",
@@ -922,7 +923,7 @@ describe('Sync orm test', function() {
         it("Should be loaded if updated from the outside", function(done) {
             this.timeout(200000000);
             connection.query(
-                "UPDATE testConditions SET name='name2' WHERE id=1 ", function(err) {
+                "UPDATE testconditions SET name='name2' WHERE id=1 ", function(err) {
                     db.refreshDatabase(function() {
                         assert.equal(_.size(db.testConditions),2);
                         done();
@@ -935,9 +936,9 @@ describe('Sync orm test', function() {
         it("Should insert 1000 players in parallel", function(done) {
             this.timeout(20000);
             async.each(_.range(5,1000), function(i, cb) {
-                console.log("Indert: "+ i);
+                // console.log("Indert: "+ i);
                 db.doTransaction(function() {
-                    console.log("In transaction: "+ i);
+                    // console.log("In transaction: "+ i);
                     var p = new db.Player({
                         name: "Player" + i,
                         idTeam: 4

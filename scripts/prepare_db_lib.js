@@ -128,7 +128,7 @@ function prepareTable(db, t, cb, excluded) {
 
 
 function prepareDB(db, cb, excluded) {
-    var excluded = excluded ? excluded.split(',') : null;
+    var excluded = excluded ? excluded.split(',') : [];
 	async.series([function(cb2) {
 		var q = "DROP TABLE IF EXISTS `dbops`;";
 		db.query(q, cb2);

@@ -14,6 +14,7 @@ async.series([function(cb) {
 	program
 		.version('0.0.1')
 		.option('-d, --db [db]', "Database to prepare (user@hostname/schema)" )
+        .option('-e, --excluded [tables]', "Excluded tables (separated by commas)")
 		.parse(process.argv);
 
 	if (!program.db) {
