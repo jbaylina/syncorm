@@ -24,10 +24,10 @@
     "events": "~1.0.2",
     "lodash": "^3.10.1",
     "mysql": "~2.6.2",
-    "node-uuid": "^1.4.3",
     "pluralize": "^1.1.2",
     "prompt": "^0.2.14",
-    "timezone": "0.0.41"
+    "timezone": "0.0.41",
+    "uuid": "^3.0.0"
   },
   "devDependencies": {
     "mocha": "*",
